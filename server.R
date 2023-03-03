@@ -6,12 +6,31 @@ library(ggthemes)
 library(doBy)
 
 
-load("riskSmall.RData")
+load("data/risksmall.rdata")
 
 # Define server logic for random distribution application
 
 shinyServer(function(input, output) {
   
+  output$SumTable <- renderTable({
+    
+    labs <- c('Index (Median)',
+              'Index (Sd-)',
+              "Index (Sd+)")
+    
+    StatTable <- st(risk.sum,
+       vars = c("AR.med" ,"AR.sd1", "AR.sd2"),
+       group = "years",
+       summ = "mean(x)",
+       labels=labs,
+       summ.names = "-", 
+       out = "return",
+       digit= 3)
+    
+    StatTable
+    
+  })
+
   output$BoxPlot <- renderPlot({
     R <- input$R
     Plot.Box <- ggplot(data = risk.all, aes(x=years, y= AR)) + 
@@ -31,7 +50,7 @@ shinyServer(function(input, output) {
     # transparency value divided by 2 here on purpose (default view)
     Plot.Box2 <- ggplot(data = risk.all, aes(x=years, y= AR)) + 
       geom_boxplot(outlier.colour= "lightgrey",
-                   outlier.size = 3,
+                   outlier.size = 2,
                    outlier.alpha = input$A/2,
                    color= "darkgrey",
                    fill="white") + 
@@ -39,6 +58,7 @@ shinyServer(function(input, output) {
       coord_cartesian(ylim = c(-40,40)) +
       guides(colour=FALSE, fill=FALSE)+
       ggtitle(paste("Boxplots with outliers")) +
+      labs( y= "Index" )+
       theme_classic() 
     
     Plot.Box2
@@ -54,6 +74,7 @@ shinyServer(function(input, output) {
       geom_point(dat= subset(risk.all, region2==input$Region), alpha=0.50, color="pink") +
       coord_cartesian(ylim = c(-40,40)) + guides(colour=FALSE)+
       ggtitle(paste("Overplotted points ", textlabel)) +
+      labs( y= "Index" )+
       theme_classic()
     
     Plot.Point
@@ -68,42 +89,46 @@ shinyServer(function(input, output) {
     geom_jitter(dat= subset(risk.all, region2 == input$Region), alpha=0.50, color="pink") +
     coord_cartesian(ylim = c(-40,40)) + guides(colour=FALSE) +
     ggtitle(paste("Jittered points", textlabel)) +
+    labs( y= "Index" )+
     theme_classic()
   
   Plot.Jitter
   })
   
   output$LinePlot <- renderPlot({
-    risk.sum <- summaryBy(AR+theta+theta1+theta2+sigma+Profit+AR.N+theta.N+theta1.N+theta2.N+RP+RP.pc~years, data = risk.all, 
-                          FUN = function(x) { c(med = median(x, na.rm=TRUE), mean = mean(x)) } )
-    
+    # risk.sum <- summaryBy(AR+theta+theta1+theta2+sigma+Profit+AR.N+theta.N+theta1.N+theta2.N+RP+RP.pc~years, data = risk.all, 
+    #                       FUN = function(x) { c(med = median(x, na.rm=TRUE), mean = mean(x)) } )
+    # 
     Plot.Line <- ggplot(risk.sum, aes(years, AR.med, group=1)) +
-      geom_point(color ="black") +
-      geom_line(color= "grey") +
+      geom_point(color ="black", size = 3) +
+      geom_line(color= "lightgrey", size =1, alpha = 0.2) +
       coord_cartesian(ylim = c(-40,40)) +
       ggtitle("Median Values") +
+      labs( y= "Index" )+
       theme_classic() 
     Plot.Line
     
   })
   
   output$QuantilePlot <- renderPlot({
-    risk.sum <- summaryBy(AR+theta+theta1+theta2+sigma+Profit+AR.N+theta.N+theta1.N+theta2.N+RP+RP.pc~years, data = risk.all, 
-                          FUN = function(x) { c(med = median(x, na.rm=TRUE), 
-                                                mean = mean(x),
-                                                sd= quantile(x,probs= c(0.05,0.95), names= FALSE, na.rm=TRUE)) } )
+    # risk.sum <- summaryBy(AR+theta+theta1+theta2+sigma+Profit+AR.N+theta.N+theta1.N+theta2.N+RP+RP.pc~years, data = risk.all, 
+    #                       FUN = function(x) { c(med = median(x, na.rm=TRUE), 
+    #                                             mean = mean(x),
+    #                                             sd= quantile(x,probs= c(0.05,0.95), names= FALSE, na.rm=TRUE)) } )
     
     Plot.Line <- ggplot(risk.sum, aes(years, AR.med, group=1)) +
-      geom_point(color ="black") +
-      geom_line(color= "grey") +
+      geom_point(color ="black", size = 3) +
+      geom_line(color= "lightgrey", size =1, alpha = 0.2) +
       coord_cartesian(ylim = c(-40,40)) +
       ggtitle("Median Values") +
+      labs( y= "Index" )+
       theme_classic() 
     
    Plot.quantile <- Plot.Line +
      geom_pointrange(data = risk.sum, aes(ymin=AR.sd1, ymax = AR.sd2), 
                                                color = "grey", size=1) +
     ggtitle("Median Values with quantile") +
+    labs( y= "Index" )+
     theme_classic() 
   
   Plot.quantile 
@@ -121,6 +146,7 @@ shinyServer(function(input, output) {
       guides(colour=FALSE) +
       coord_cartesian(ylim = c(-40,40)) +
       ggtitle(paste("Parallel Plot", textlabel)) +
+      labs( y= "Index" )+
       theme_classic() 
     
     Plot.Tot
@@ -136,6 +162,7 @@ shinyServer(function(input, output) {
     
   Plot.Multi + facet_wrap(~region2)  +
       ggtitle(paste("Small Multiple Parallel Plot")) +
+      labs( y= "Index" )+
       theme_minimal() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   })

@@ -7,7 +7,7 @@ shinyUI(fluidPage(
   # Application title
   titlePanel("Visualizing Many Over Time "),
   tags$h5("Christophe Bontemps (SIAP)"),
-  tags$h5("Version 0.1, February 26th, 2023 "),
+  tags$h5("Version 2.1 - 3 March, 2023 "),
   
   # Sidebar with controls to select the random distribution type
   # and number of observations to generate. Note the use of the br()
@@ -35,6 +35,7 @@ shinyUI(fluidPage(
   # of the generated distribution
   mainPanel(
     tabsetPanel(
+      tabPanel("Summary Statistics", tableOutput("SumTable")),
       tabPanel("Median Values", plotOutput("LinePlot")),
       tabPanel("Quantile Values", plotOutput("QuantilePlot")),
       tabPanel("Point Plot", plotOutput("PointPlot")),
