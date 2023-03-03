@@ -9,37 +9,65 @@ library(doBy)
 load("riskSmall.RData")
 
 # Define server logic for random distribution application
+
 shinyServer(function(input, output) {
+  
+  output$BoxPlot <- renderPlot({
+    R <- input$R
+    Plot.Box <- ggplot(data = risk.all, aes(x=years, y= AR)) + 
+      geom_boxplot(outlier.colour= "grey", color= "darkgrey", fill="grey") + 
+      geom_boxplot(data = subset(risk.all, region == R), outlier.colour= "pink", color= "darkgrey", fill="pink") + 
+      coord_cartesian(ylim = c(-40,40)) +
+      guides(colour=FALSE, fill=FALSE)+
+      ggtitle(paste("Boxplots")) +
+      theme_classic() 
+    
+    Plot.Box
+    
+  })
+  
+  output$BoxPlot2 <- renderPlot({
+   
+    # transparency value divided by 2 here on purpose (default view)
+    Plot.Box2 <- ggplot(data = risk.all, aes(x=years, y= AR)) + 
+      geom_boxplot(outlier.colour= "lightgrey",
+                   outlier.size = 3,
+                   outlier.alpha = input$A/2,
+                   color= "darkgrey",
+                   fill="white") + 
+      #geom_boxplot(data = subset(risk.all, region == R), outlier.colour= "pink", color= "darkgrey", fill="pink") + 
+      coord_cartesian(ylim = c(-40,40)) +
+      guides(colour=FALSE, fill=FALSE)+
+      ggtitle(paste("Boxplots with outliers")) +
+      theme_classic() 
+    
+    Plot.Box2
+    
+  })
   
   
   output$PointPlot <- renderPlot({
-    R <- input$R
-    A <- input$A
+   textlabel <- ifelse(input$Region != "Select...", paste("(Region", input$Region, "highlighted)"), "")
     # Point Plot 
     Plot.Point <- ggplot(risk.all, aes(x=years, y= AR)) + 
-      geom_point(color = "grey", alpha=A) + 
-      geom_point(dat= subset(risk.all, region==R), alpha=0.50, color="pink") +
+      geom_point(color = "grey", alpha=input$A) + 
+      geom_point(dat= subset(risk.all, region2==input$Region), alpha=0.50, color="pink") +
       coord_cartesian(ylim = c(-40,40)) + guides(colour=FALSE)+
-      ggtitle(paste("Overplotted points (Region",R, "higlighted)")) +
-
+      ggtitle(paste("Overplotted points ", textlabel)) +
       theme_classic()
     
-    
-    
     Plot.Point
-  
-  Plot.Point
   })
   
   output$JitterPlot <- renderPlot({
-  R <- input$R
-  A <- input$A
+  
+  textlabel <- ifelse(input$Region != "Select...", paste("(Region", input$Region, "highlighted)"), "")
   # Point Plot  with Jitter 
   Plot.Jitter <- ggplot(risk.all, aes(x=years, y= AR)) + 
-    geom_jitter(color = "grey",  alpha=A) + 
-    geom_jitter(dat= subset(risk.all, region==R), alpha=0.50, color="pink") +
+    geom_jitter(color = "grey",  alpha=input$A) + 
+    geom_jitter(dat= subset(risk.all, region2 == input$Region), alpha=0.50, color="pink") +
     coord_cartesian(ylim = c(-40,40)) + guides(colour=FALSE) +
-    ggtitle(paste("Jittered points (Region",R, "higlighted)")) +
+    ggtitle(paste("Jittered points", textlabel)) +
     theme_classic()
   
   Plot.Jitter
@@ -75,38 +103,24 @@ shinyServer(function(input, output) {
    Plot.quantile <- Plot.Line +
      geom_pointrange(data = risk.sum, aes(ymin=AR.sd1, ymax = AR.sd2), 
                                                color = "grey", size=1) +
-    ggtitle("Median Values + quantiles") +
+    ggtitle("Median Values with quantile") +
     theme_classic() 
   
   Plot.quantile 
   })
   
-  output$BoxPlot <- renderPlot({
-    R <- input$R
-    Plot.Box <- ggplot(data = risk.all, aes(x=years, y= AR)) + 
-      geom_boxplot(outlier.colour= "grey", color= "darkgrey", fill="grey") + 
-      geom_boxplot(data = subset(risk.all, region == R), outlier.colour= "pink", color= "darkgrey", fill="pink") + 
-      coord_cartesian(ylim = c(-40,40)) +
-      guides(colour=FALSE, fill=FALSE)+
-      ggtitle(paste("Boxplots")) +
-      theme_classic() 
-    
-    Plot.Box
-    
-  })
   
   output$ParaPlot <- renderPlot({
-    R <- input$R
-    A <- input$A
+    textlabel <- ifelse(input$Region != "Select...", paste("(Region", input$Region, "highlighted)"), "")
     
     Plot.Tot <-  ggplot()  +
-      geom_line(dat= risk.all, alpha=A, color="black",
+      geom_line(dat= risk.all, alpha= input$A, color="black",
                 aes(x=years, y=AR, group=factor(ident) )) +
-      geom_line(dat= subset(risk.all, region==R), alpha=0.05, color="pink", 
+      geom_line(dat= subset(risk.all, region2== input$Region), alpha=0.05, color="pink", 
                 aes(x=years, y=AR, group=factor(ident) )) +
       guides(colour=FALSE) +
       coord_cartesian(ylim = c(-40,40)) +
-      ggtitle(paste("Parallel Plot (Region",R, "higlighted)")) +
+      ggtitle(paste("Parallel Plot", textlabel)) +
       theme_classic() 
     
     Plot.Tot
@@ -120,11 +134,11 @@ shinyServer(function(input, output) {
       guides(colour=FALSE) + 
       coord_cartesian(ylim = c(-40,40)) 
     
-  Plot.Multi + facet_wrap(~region)  +
-      ggtitle(paste("Multiple Parallel Plot")) +
-      theme_classic() 
+  Plot.Multi + facet_wrap(~region2)  +
+      ggtitle(paste("Small Multiple Parallel Plot")) +
+      theme_minimal() +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   })
-  
   
   
 })
